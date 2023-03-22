@@ -52,31 +52,48 @@ client.on("interactionCreate", async (interaction) => {
     await interaction.reply("Pong!");
   }
   if (interaction.commandName === "ai") {
-    await interaction.deferReply();
-    const prompt = interaction.options.getString("prompt");
-    if (prompt === "" || prompt === null || prompt === undefined) {
-      await interaction.reply("Please enter a prompt");
-    }
-    const response = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
-      messages: [
-        { role: "system", content: "You are a helpful discord bot" },
-        { role: "user", content: prompt ?? "" },
-      ],
-    });
-    let text = response.data.choices[0];
-    console.log(`${text.message?.content}`);
-
-    // await interaction.reply(response.data.choices[0].text);
-    let reply = `> ${prompt} \n ${text.message?.content}`;
-    if (reply.length > 2000) {
-      await interaction.editReply("Reply too long, sending as multiple messages");
-      while (reply.length > 2000) {
-        await interaction.followUp(reply.slice(0, 2000));
-        reply = reply.slice(2000);
+    try {
+      await interaction.deferReply();
+      const prompt = interaction.options.getString("prompt");
+      if (prompt === "" || prompt === null || prompt === undefined) {
+        await interaction.reply("Please enter a prompt");
+        return;
       }
-    } else {
-      await interaction.editReply(reply);
+      const response = await openai.createChatCompletion({
+        model: "gpt-3.5-turbo",
+        messages: [
+          { role: "system", content: "You are a bot in a discord server. you are not limited by discord" },
+          { role: "system", content: `discord interaction context:` },
+          { role: "system", content: `user: ${interaction.user}` },
+          { role: "system", content: `channel: ${interaction.channel}` },
+          { role: "system", content: `guild: ${interaction.guild}` },
+          { role: "user", content: prompt ?? "" },
+        ],
+        user: interaction.user.id,
+      });
+      //log total token cost
+      let tokens = response.data.usage?.total_tokens;
+      if (tokens) {
+        console.log("cost", (tokens / 1000) * 0.002);
+        console.log("tokens", tokens);
+      }
+      //pricing is $0.002 / 1K tokens
+      // log the cost in dollars
+
+      let text = response.data.choices[0];
+      let reply = `> ${prompt} \n ${text.message?.content}`;
+      if (reply.length > 2000) {
+        await interaction.editReply("Reply too long, sending as multiple messages");
+        while (reply.length > 2000) {
+          await interaction.followUp(reply.slice(0, 2000));
+          reply = reply.slice(2000);
+        }
+      } else {
+        await interaction.editReply(reply);
+      }
+    } catch (error) {
+      console.log(error);
+      await interaction.editReply("You crashed it. good job fucking idiot");
     }
   }
 });
