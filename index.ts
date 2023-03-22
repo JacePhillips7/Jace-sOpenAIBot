@@ -71,7 +71,10 @@ client.on("interactionCreate", async (interaction) => {
       await interaction.deferReply();
       let reply = await image(prompt);
       await interaction.editReply(`> ${prompt} \n ${reply}`);
-    } catch (error) {}
+    } catch (error) {
+      console.error(error);
+      await interaction.editReply("Failed to generate image");
+    }
   }
 });
 
