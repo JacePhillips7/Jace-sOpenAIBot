@@ -53,12 +53,12 @@ client.on("interactionCreate", async (interaction) => {
   }
   if (interaction.commandName === "ai") {
     try {
-      await interaction.deferReply();
       const prompt = interaction.options.getString("prompt");
       if (prompt === "" || prompt === null || prompt === undefined) {
         await interaction.reply("Please enter a prompt");
         return;
       }
+      await interaction.deferReply();
       const response = await openai.createChatCompletion({
         model: "gpt-3.5-turbo",
         messages: [
