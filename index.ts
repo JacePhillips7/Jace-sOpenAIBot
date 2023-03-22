@@ -68,7 +68,16 @@ client.on("interactionCreate", async (interaction) => {
     console.log(`${text.message?.content}`);
 
     // await interaction.reply(response.data.choices[0].text);
-    await interaction.editReply(`> ${prompt} \n ${text.message?.content}`);
+    let reply = `> ${prompt} \n ${text.message?.content}`;
+    if (reply.length > 2000) {
+      await interaction.editReply("Reply too long, sending as multiple messages");
+      while (reply.length > 2000) {
+        await interaction.followUp(reply.slice(0, 2000));
+        reply = reply.slice(2000);
+      }
+    } else {
+      await interaction.editReply(reply);
+    }
   }
 });
 
